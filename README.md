@@ -27,3 +27,5 @@ The GitHub Actions workflow builds and deploys pushes to main. Enable Pages with
 The deployed site has separate browser storage from localhost. Existing localhost data is not automatically transferred to the deployed origin. No workout database is committed or uploaded.
 
 Choose Workout A or Workout B manually. Each has its own saved draft; switching and reloading preserve both. After saving, the app selects the other type. History entries can be deleted with confirmation. Deletion leaves the current selection and draft unchanged.
+
+Reps are now fixed to the spreadsheet prescriptions and displayed read-only. New workout logs use these targets automatically; only weight and RPE are editable. Older workout history retains its original recorded reps.

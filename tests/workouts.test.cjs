@@ -56,3 +56,10 @@ test('decrease button subtracts five, stops at zero, and saves',async()=>{
  app.entries[0].weight='3';app.decreaseWeight(0);await new Promise(setImmediate);assert.equal(app.entries[0].weight,'0');app.decreaseWeight(0);await new Promise(setImmediate);assert.equal(app.entries[0].weight,'0');
  assert.equal((await env.create()).entries[0].weight,'0');
 });
+
+test('saving uses spreadsheet prescriptions without entering reps',async()=>{
+ const app=await setup().create();app.entries[0].weight='25';app.entries[0].reps=['99','99','99'];app.entries[0].rpe='8';
+ await app.finish();assert.equal(app.history.length,1);assert.equal(app.history[0].entries[0].reps.join(','),'8,8,8');
+ assert.equal(app.history[0].entries[5].reps.join(','),'MAX,MAX');assert.equal(app.history[0].entries[6].reps.join(','),'15–20,15–20');
+ app.entries[0].weight='20';await app.finish();assert.equal(app.history[1].entries[0].reps.join(','),'12,12,12');
+});
