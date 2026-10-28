@@ -18,10 +18,10 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 <p class="hint">Reps are fixed. Enter your weight and last-set RPE.</p>
 
 @for(ex of exercises;track ex.name;let i=$index){
-<section class="exercise"><div class="exercise-heading"><h3>{{ex.name}}</h3><span>{{ex.sets}} × {{ex.reps}}</span></div>
-<div class="fields"><label class="weight">{{ex.body==='BW'?'Weight':'Weight ('+unit+')'}}
+<section class="exercise"><div class="exercise-heading"><h3>{{ex.name}}</h3><p class="prescription">{{ex.sets}} sets <span>×</span> {{ex.reps}} reps</p></div>
+<div class="fields" [class.bodyweight-only]="ex.noRpe"><label class="weight">{{ex.body==='BW'?'Weight':'Weight ('+unit+')'}}
 @if(ex.body==='BW'){<div class="bodyweight">Bodyweight</div>}@else{<div class="weight-field">@if(ex.body){<span>BW +</span>}<input type="number" min="0" step="5" inputmode="decimal" [attr.aria-label]="ex.name+' weight'" placeholder="—" [(ngModel)]="entries[i].weight" (ngModelChange)="saveDraft()"><div class="weight-adjust"><button class="add-weight" [attr.aria-label]="'Decrease '+ex.name+' weight by 5'" (click)="decreaseWeight(i)">−5</button><button class="add-weight" [attr.aria-label]="'Increase '+ex.name+' weight by 5'" (click)="increaseWeight(i)">+5</button></div></div>}
-</label><div class="reps">@for(rep of entries[i].reps;track $index;let s=$index){<label>Set {{s+1}}<div class="fixed-reps">{{ex.reps}}</div></label>}</div></div>@if(!ex.noRpe){<label class="rpe">Last set RPE<select [attr.aria-label]="ex.name+' last set RPE'" [(ngModel)]="entries[i].rpe" (ngModelChange)="saveDraft()"><option value="">—</option>@for(r of ['1','2','3','4','5','6','6.5','7','7.5','8','8.5','9','9.5','10'];track r){<option [value]="r">{{r}}</option>}</select></label>}</section>}
+</label>@if(!ex.noRpe){<label class="rpe">Last set RPE<select [attr.aria-label]="ex.name+' last set RPE'" [(ngModel)]="entries[i].rpe" (ngModelChange)="saveDraft()"><option value="">—</option>@for(r of ['1','2','3','4','5','6','6.5','7','7.5','8','8.5','9','9.5','10'];track r){<option [value]="r">{{r}}</option>}</select></label>}</div></section>}
 <button class="save" (click)="finish()" [disabled]="!hasLog">Save workout</button>
 }@else{
 <div class="heading"><h2>History</h2><button class="download" (click)="download()">Download SQLite backup</button></div>
