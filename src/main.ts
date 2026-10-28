@@ -15,7 +15,7 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 <div class="weekly-tracker" aria-label="Weekly workout goal"><span>This week <b>{{weeklyCount}} / 3 workouts</b></span><div class="weekly-marks" aria-hidden="true">@for(n of [1,2,3];track n){<i [class.complete]="weeklyCount>=n"></i>}</div></div>
 @if(view==='workout'){
 <div class="heading"><div class="workout-switch" role="group" aria-label="Workout type">@for(t of ['A','B'];track t){<button [class.active]="type===t" [attr.aria-pressed]="type===t" (click)="switchType(t)">Workout {{t}}</button>}</div><span>{{today}}</span></div>
-<p class="hint">Reps are fixed. Enter your weight and last-set RPE.</p>
+
 
 @for(ex of exercises;track ex.name;let i=$index){
 <section class="exercise" [class.group-green]="i<2" [class.group-blue]="i>=2 && i<4" [class.group-purple]="i>=4"><div class="exercise-heading"><h3>{{ex.name}}</h3><p class="prescription">{{ex.sets}} sets <span>×</span> {{ex.reps}} reps</p></div>
@@ -59,6 +59,7 @@ async finish(){if(this.busy||!this.hasLog)return;for(let i=0;i<this.entries.leng
 formatDate(d:string){return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 }
 bootstrapApplication(App).catch(console.error);
+
 
 
 
