@@ -50,3 +50,9 @@ test('weight button adds five to an empty or existing weight and saves the draft
  assert.equal(app.entries[0].weight,'5');app.entries[0].weight='25';app.increaseWeight(0);await new Promise(setImmediate);
  assert.equal(app.entries[0].weight,'30');const reopened=await env.create();assert.equal(reopened.entries[0].weight,'30');
 });
+
+test('decrease button subtracts five, stops at zero, and saves',async()=>{
+ const env=setup();const app=await env.create();app.entries[0].weight='25';app.decreaseWeight(0);await new Promise(setImmediate);assert.equal(app.entries[0].weight,'20');
+ app.entries[0].weight='3';app.decreaseWeight(0);await new Promise(setImmediate);assert.equal(app.entries[0].weight,'0');app.decreaseWeight(0);await new Promise(setImmediate);assert.equal(app.entries[0].weight,'0');
+ assert.equal((await env.create()).entries[0].weight,'0');
+});
