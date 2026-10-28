@@ -7,7 +7,7 @@ type Exercise = {name:string; sets:number; reps:string; body?:string; noRpe?:boo
 type Entry = {weight:string; reps:string[]; done?:boolean[]; rpe?:string};
 type Workout = {id:number; date:string; type:string; entries:Entry[]; unit?:string; week?:number; day?:number; notes?:string};
 const A:Exercise[] = [{name:'DB Bench Press',sets:3,reps:'8'},{name:'DB Bench Row',sets:3,reps:'10 / side'},{name:'DB Alternating Lunge',sets:3,reps:'8 / side'},{name:'DB Romanian Deadlift',sets:3,reps:'12'},{name:'DB Hammer Curl',sets:2,reps:'15'},{name:'Pushup',sets:2,reps:'MAX',body:'BW',noRpe:true},{name:'Reverse Crunch',sets:2,reps:'15–20',body:'BW',noRpe:true}];
-const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shrug',sets:3,reps:'15'},{name:'Goblet Squat',sets:3,reps:'8'},{name:'Towel Hamstring Curl',sets:3,reps:'15',body:'BW+'},{name:'DB Bicep Curl',sets:2,reps:'15'},{name:'DB Chest Fly',sets:2,reps:'10'},{name:'DB Overhead Tricep Extension',sets:2,reps:'15'}];
+const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shrug',sets:3,reps:'15'},{name:'Goblet Squat',sets:3,reps:'8'},{name:'Weighted Glute Bridge',sets:3,reps:'15',body:'BW+'},{name:'DB Bicep Curl',sets:2,reps:'15'},{name:'DB Chest Fly',sets:2,reps:'10'},{name:'DB Overhead Tricep Extension',sets:2,reps:'15'}];
 @Component({selector:'app-root',standalone:true,imports:[FormsModule],template:`
 <main>
 @if(!ready){<p role="status">{{loadError||'Opening workout database…'}}</p>}@else{<fieldset [disabled]="busy">
@@ -18,7 +18,7 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 <p class="hint">Reps are fixed. Enter your weight and last-set RPE.</p>
 
 @for(ex of exercises;track ex.name;let i=$index){
-<section class="exercise"><div class="exercise-heading"><h3>{{ex.name}}</h3><p class="prescription">{{ex.sets}} sets <span>×</span> {{ex.reps}} reps</p></div>
+<section class="exercise" [class.group-green]="i<2" [class.group-blue]="i>=2 && i<4" [class.group-purple]="i>=4"><div class="exercise-heading"><h3>{{ex.name}}</h3><p class="prescription">{{ex.sets}} sets <span>×</span> {{ex.reps}} reps</p></div>
 <div class="fields" [class.bodyweight-only]="ex.noRpe"><label class="weight">{{ex.body==='BW'?'Weight':'Weight ('+unit+')'}}
 @if(ex.body==='BW'){<div class="bodyweight">Bodyweight</div>}@else{<div class="weight-field">@if(ex.body){<span>BW +</span>}<input type="number" min="0" step="5" inputmode="decimal" [attr.aria-label]="ex.name+' weight'" placeholder="—" [(ngModel)]="entries[i].weight" (ngModelChange)="saveDraft()"><div class="weight-adjust"><button class="add-weight" [attr.aria-label]="'Decrease '+ex.name+' weight by 5'" (click)="decreaseWeight(i)">−5</button><button class="add-weight" [attr.aria-label]="'Increase '+ex.name+' weight by 5'" (click)="increaseWeight(i)">+5</button></div></div>}
 </label>@if(!ex.noRpe){<label class="rpe">Last set RPE<select [attr.aria-label]="ex.name+' last set RPE'" [(ngModel)]="entries[i].rpe" (ngModelChange)="saveDraft()"><option value="">—</option>@for(r of ['1','2','3','4','5','6','6.5','7','7.5','8','8.5','9','9.5','10'];track r){<option [value]="r">{{r}}</option>}</select></label>}</div></section>}
