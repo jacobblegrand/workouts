@@ -1,7 +1,7 @@
 import initSqlJs, { Database, SqlJsStatic } from 'sql.js';
 
 export interface StoredWorkout { id:number; date:string; type:string; [key:string]:unknown }
-export interface SavedState { history:StoredWorkout[]; entries:unknown[]; unit:string }
+export interface SavedState { history:StoredWorkout[]; entries:unknown[]; unit:string; activeType?:string; drafts?:Record<string,unknown[]> }
 
 // SQLite performs all data operations. IndexedDB durably stores its binary file.
 export class WorkoutDatabase {
@@ -26,6 +26,7 @@ export class WorkoutDatabase {
     this.db=bytes?new this.sql.Database(bytes):new this.sql.Database();
     this.db.run(`CREATE TABLE IF NOT EXISTS workouts (id INTEGER PRIMARY KEY, date TEXT NOT NULL, type TEXT NOT NULL, data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS draft (id INTEGER PRIMARY KEY CHECK(id=1), entries TEXT NOT NULL, unit TEXT NOT NULL);`);
+    this.db.run('CREATE TABLE IF NOT EXISTS settings (id INTEGER PRIMARY KEY CHECK(id=1), data TEXT NOT NULL)');
     if(!bytes){
       const legacy=localStorage.getItem('forma-v1');
       if(legacy){
@@ -41,7 +42,8 @@ export class WorkoutDatabase {
     const draft=this.db.exec('SELECT entries, unit FROM draft WHERE id=1')[0]?.values[0];
     if(!draft)return null;
     const history=(this.db.exec('SELECT data FROM workouts ORDER BY id')[0]?.values||[]).map(row=>JSON.parse(String(row[0])));
-    return {history,entries:JSON.parse(String(draft[0])),unit:String(draft[1])};
+    const settings=this.db.exec('SELECT data FROM settings WHERE id=1')[0]?.values[0];
+    return {history,entries:JSON.parse(String(draft[0])),unit:String(draft[1]),...(settings?JSON.parse(String(settings[0])):{})};
   }
 
   save(state:SavedState):Promise<void>{
@@ -52,6 +54,7 @@ export class WorkoutDatabase {
         candidate.run('BEGIN; DELETE FROM workouts;');
         for(const w of snapshot.history){candidate.run('INSERT INTO workouts (id,date,type,data) VALUES (?,?,?,?)',[w.id,w.date,w.type,JSON.stringify(w)]);}
         candidate.run('INSERT OR REPLACE INTO draft (id,entries,unit) VALUES (1,?,?)',[JSON.stringify(snapshot.entries),snapshot.unit]);
+        candidate.run('INSERT OR REPLACE INTO settings (id,data) VALUES (1,?)',[JSON.stringify({activeType:snapshot.activeType,drafts:snapshot.drafts})]);
         candidate.run('COMMIT');
         await this.persist(candidate.export());
         this.db.close();this.db=candidate;

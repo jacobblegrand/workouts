@@ -13,7 +13,7 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 @if(!ready){<p role="status">{{loadError||'Opening workout database…'}}</p>}@else{<fieldset [disabled]="busy">
 <header><h1>Workouts</h1><nav><button [class.active]="view==='workout'" (click)="view='workout'">Log workout</button><button [class.active]="view==='history'" (click)="view='history'">History</button></nav></header>
 @if(view==='workout'){
-<div class="heading"><h2>Workout {{type}}</h2><span>{{today}}</span></div>
+<div class="heading"><div class="workout-switch" role="group" aria-label="Workout type">@for(t of ['A','B'];track t){<button [class.active]="type===t" [attr.aria-pressed]="type===t" (click)="switchType(t)">Workout {{t}}</button>}</div><span>{{today}}</span></div>
 <p class="hint">Enter your weight and reps for each set.</p>
 
 @for(ex of exercises;track ex.name;let i=$index){
@@ -25,21 +25,23 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 }@else{
 <div class="heading"><h2>History</h2><button class="download" (click)="download()">Download SQLite backup</button></div>
 @if(!history.length){<p class="empty">No workouts saved yet.</p>}
-@for(w of history.slice().reverse();track w.id){<details><summary><b>Workout {{w.type}}</b><span>{{formatDate(w.date)}}</span></summary><div class="history-rows">@for(ex of getExercises(w.type);track ex.name;let i=$index){@if(hasEntry(w.entries[i])){<div class="history-row"><b>{{ex.name}}</b><span>{{ex.body||''}} {{w.entries[i].weight}} {{ex.body==='BW'?'':(w.unit||unit)}} · {{displayReps(w.entries[i])}} reps @if(w.entries[i].rpe){ · RPE {{w.entries[i].rpe}} }</span></div>}}</div></details>}
+@for(w of history.slice().reverse();track w.id){<details><summary><b>Workout {{w.type}}</b><span>{{formatDate(w.date)}}</span></summary><div class="history-rows">@for(ex of getExercises(w.type);track ex.name;let i=$index){@if(hasEntry(w.entries[i])){<div class="history-row"><b>{{ex.name}}</b><span>{{ex.body||''}} {{w.entries[i].weight}} {{ex.body==='BW'?'':(w.unit||unit)}} · {{displayReps(w.entries[i])}} reps @if(w.entries[i].rpe){ · RPE {{w.entries[i].rpe}} }</span></div>}}<div class="delete-actions">@if(deleteId===w.id){<span>Delete this workout?</span><button class="delete" (click)="deleteWorkout(w.id)">Confirm delete</button><button (click)="deleteId=null">Cancel</button>}@else{<button class="delete" (click)="deleteId=w.id">Delete workout</button>}</div></div></details>}
 }
 @if(message){<div class="message" role="status">{{message}}<button aria-label="Dismiss" (click)="message=''">×</button></div>}
 </fieldset>}
 </main>`})
 class App {
 ready=false; busy=false; loadError=''; storageStatus='Saved in SQLite on this device.'; private database=new WorkoutDatabase();
+type='A'; drafts:Record<string,Entry[]>={}; deleteId:number|null=null;
 view='workout'; history:Workout[]=[]; entries:Entry[]=[]; unit='lb'; message='';
 today=new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'});
 constructor(private changes:ChangeDetectorRef){void this.load();}
-async load(){try{const data=await this.database.open();if(data){this.history=data.history as unknown as Workout[];this.entries=data.entries as Entry[];this.unit=data.unit;}if(this.entries.length!==7)this.resetEntries();this.entries.forEach(e=>e.rpe??='');await this.database.save(this.snapshot());this.ready=true;}catch{this.loadError='Could not open the local database. Reload to retry. Existing data has been kept.';}finally{this.changes.markForCheck();}}
-private snapshot():SavedState{return {history:this.history as unknown as SavedState['history'],entries:this.entries,unit:this.unit};}
+async load(){try{const data=await this.database.open();if(data){this.history=data.history as unknown as Workout[];this.entries=data.entries as Entry[];this.unit=data.unit;this.type=data.activeType==='A'||data.activeType==='B'?data.activeType:(this.history.at(-1)?.type==='A'?'B':'A');this.drafts=(data.drafts||{}) as Record<string,Entry[]>;}if(this.entries.length!==7)this.resetEntries();this.entries.forEach(e=>e.rpe??='');await this.database.save(this.snapshot());this.ready=true;}catch{this.loadError='Could not open the local database. Reload to retry. Existing data has been kept.';}finally{this.changes.markForCheck();}}
+private snapshot():SavedState{return {history:this.history as unknown as SavedState['history'],entries:this.entries,unit:this.unit,activeType:this.type,drafts:{...this.drafts,[this.type]:this.entries}};}
 async download(){try{await this.database.download();}catch{this.message='Could not download the database.';}}
 
-get type(){return this.history.length%2===0?'A':'B'}
+async switchType(type:string){if(this.busy||type===this.type)return;this.drafts[this.type]=structuredClone(this.entries);this.type=type;this.entries=this.drafts[type]||this.freshEntries(type);await this.saveDraft();}
+async deleteWorkout(id:number){if(this.busy)return;const history=this.history.filter(w=>w.id!==id);this.busy=true;try{await this.database.save({...this.snapshot(),history:history as unknown as SavedState['history']});this.history=history;this.deleteId=null;this.message='Workout deleted.';}catch{this.message='Could not delete the workout. It is still saved.';}finally{this.busy=false;this.changes.markForCheck();}}
 get exercises(){return this.getExercises(this.type)}
 get hasReps(){return this.entries.some(e=>e.reps.some(r=>r!==''&&r!==null&&r!==undefined));}
 getExercises(t:string){return t==='A'?A:B}
@@ -49,7 +51,7 @@ async saveDraft(){this.storageStatus='Saving…';try{await this.database.save(th
 
 hasEntry(e:Entry){return !!e&&e.reps.some(r=>r!==''&&r!==null&&r!==undefined);}
 displayReps(e:Entry){return e.reps.map(r=>r===''||r===null||r===undefined?'—':r).join(' / ');}
-async finish(){if(this.busy||!this.hasReps)return;for(let i=0;i<this.entries.length;i++){const e=this.entries[i];if(e.rpe&&(!Number.isFinite(Number(e.rpe))||Number(e.rpe)<1||Number(e.rpe)>10)){this.message='RPE must be between 1 and 10.';return;}if(e.reps.some(r=>r!==''&&r!==null&&r!==undefined&&(!Number.isInteger(Number(r))||Number(r)<0))){this.message='Reps must be whole numbers of 0 or more.';return;}if(this.hasEntry(e)&&this.exercises[i].body!=='BW'&&(e.weight===''||e.weight===null||Number(e.weight)<0||!Number.isFinite(Number(e.weight)))){this.message='Enter a weight for '+this.exercises[i].name+'.';return;}}const workout:Workout={id:Date.now(),date:new Date().toISOString(),type:this.type,entries:structuredClone(this.entries),unit:this.unit};const nextHistory=[...this.history,workout];const nextType=nextHistory.length%2===0?'A':'B';const nextEntries=this.freshEntries(nextType,nextHistory);this.busy=true;try{await this.database.save({history:nextHistory as unknown as SavedState['history'],entries:nextEntries,unit:this.unit});}catch{this.message='Workout could not be saved. Your entries are still here.';return;}finally{this.busy=false;this.changes.markForCheck();}this.history=nextHistory;this.entries=nextEntries;this.view='history';this.message='Workout saved.';}
+async finish(){if(this.busy||!this.hasReps)return;for(let i=0;i<this.entries.length;i++){const e=this.entries[i];if(e.rpe&&(!Number.isFinite(Number(e.rpe))||Number(e.rpe)<1||Number(e.rpe)>10)){this.message='RPE must be between 1 and 10.';return;}if(e.reps.some(r=>r!==''&&r!==null&&r!==undefined&&(!Number.isInteger(Number(r))||Number(r)<0))){this.message='Reps must be whole numbers of 0 or more.';return;}if(this.hasEntry(e)&&this.exercises[i].body!=='BW'&&(e.weight===''||e.weight===null||Number(e.weight)<0||!Number.isFinite(Number(e.weight)))){this.message='Enter a weight for '+this.exercises[i].name+'.';return;}}const workout:Workout={id:Date.now(),date:new Date().toISOString(),type:this.type,entries:structuredClone(this.entries),unit:this.unit};const nextHistory=[...this.history,workout];const nextType=this.type==='A'?'B':'A';const nextDrafts={...this.drafts};delete nextDrafts[this.type];const nextEntries=nextDrafts[nextType]||this.freshEntries(nextType,nextHistory);this.busy=true;try{await this.database.save({history:nextHistory as unknown as SavedState['history'],entries:nextEntries,unit:this.unit,activeType:nextType,drafts:{...nextDrafts,[nextType]:nextEntries}});}catch{this.message='Workout could not be saved. Your entries are still here.';return;}finally{this.busy=false;this.changes.markForCheck();}this.history=nextHistory;this.type=nextType;this.drafts=nextDrafts;this.entries=nextEntries;this.view='history';this.message='Workout saved.';}
 formatDate(d:string){return new Date(d).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});}
 }
 bootstrapApplication(App).catch(console.error);

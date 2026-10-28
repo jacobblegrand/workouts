@@ -25,3 +25,5 @@ Weights are per dumbbell where applicable. The unit selector labels the current 
 The GitHub Actions workflow builds and deploys pushes to main. Enable Pages with GitHub Actions as the publishing source. The Pages build uses /workouts/ as its base path, including the bundled SQLite WASM file. Run npm run build:pages to build it locally.
 
 The deployed site has separate browser storage from localhost. Existing localhost data is not automatically transferred to the deployed origin. No workout database is committed or uploaded.
+
+Choose Workout A or Workout B manually. Each has its own saved draft; switching and reloading preserve both. After saving, the app selects the other type. History entries can be deleted with confirmation. Deletion leaves the current selection and draft unchanged.
