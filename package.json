@@ -1,0 +1,36 @@
+{
+  "name": "workout-app",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "ng serve --host 0.0.0.0",
+    "build": "ng build",
+    "build:pages": "ng build --base-href /workouts/"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^21.2.25",
+    "@angular/compiler": "^21.2.25",
+    "@angular/core": "^21.2.25",
+    "@angular/forms": "^21.2.25",
+    "@angular/platform-browser": "^21.2.25",
+    "rxjs": "^7.8.2",
+    "sql.js": "^1.15.2",
+    "zone.js": "^0.16.3"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.28",
+    "@angular/cli": "^21.2.28",
+    "@angular/compiler-cli": "^21.2.25",
+    "@types/sql.js": "^1.4.11",
+    "fake-indexeddb": "^6.2.6",
+    "typescript": "5.9"
+  },
+  "overrides": {
+    "undici": "^7.30.1"
+  }
+}
