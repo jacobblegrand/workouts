@@ -26,7 +26,8 @@
             ],
             "allowedCommonJsDependencies": [
               "sql.js"
-            ]
+            ],
+            "outputHashing": "all"
           }
         },
         "serve": {
