@@ -12,6 +12,7 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 <main>
 @if(!ready){<p role="status">{{loadError||'Opening workout database…'}}</p>}@else{<fieldset [disabled]="busy">
 <header><h1>Workouts</h1><nav><button [class.active]="view==='workout'" (click)="view='workout'">Log workout</button><button [class.active]="view==='history'" (click)="view='history'">History</button></nav></header>
+<div class="weekly-tracker" aria-label="Weekly workout goal"><span>This week <b>{{weeklyCount}} / 3 workouts</b></span><div class="weekly-marks" aria-hidden="true">@for(n of [1,2,3];track n){<i [class.complete]="weeklyCount>=n"></i>}</div></div>
 @if(view==='workout'){
 <div class="heading"><div class="workout-switch" role="group" aria-label="Workout type">@for(t of ['A','B'];track t){<button [class.active]="type===t" [attr.aria-pressed]="type===t" (click)="switchType(t)">Workout {{t}}</button>}</div><span>{{today}}</span></div>
 <p class="hint">Enter your weight and reps for each set.</p>
@@ -42,6 +43,7 @@ async download(){try{await this.database.download();}catch{this.message='Could n
 
 async switchType(type:string){if(this.busy||type===this.type)return;this.drafts[this.type]=structuredClone(this.entries);this.type=type;this.entries=this.drafts[type]||this.freshEntries(type);await this.saveDraft();}
 async deleteWorkout(id:number){if(this.busy)return;const history=this.history.filter(w=>w.id!==id);this.busy=true;try{await this.database.save({...this.snapshot(),history:history as unknown as SavedState['history']});this.history=history;this.deleteId=null;this.message='Workout deleted.';}catch{this.message='Could not delete the workout. It is still saved.';}finally{this.busy=false;this.changes.markForCheck();}}
+get weeklyCount(){const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());start.setDate(start.getDate()-((start.getDay()+6)%7));const end=new Date(start);end.setDate(end.getDate()+7);return this.history.filter(w=>{const date=new Date(w.date);return date>=start&&date<end;}).length;}
 get exercises(){return this.getExercises(this.type)}
 get hasReps(){return this.entries.some(e=>e.reps.some(r=>r!==''&&r!==null&&r!==undefined));}
 getExercises(t:string){return t==='A'?A:B}

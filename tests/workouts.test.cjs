@@ -32,3 +32,15 @@ test('deletion persists without changing selected type or draft; failed deletion
  assert.equal(other.history.length,0);assert.equal(other.type,type);assert.equal(other.entries[0].weight,'30');
  const reopened=await clean.create();assert.equal(reopened.history.length,0);assert.equal(reopened.type,type);assert.equal(reopened.entries[0].weight,'30');
 });
+
+test('weekly goal counts Monday through Sunday and excludes other weeks',async()=>{
+ const app=await setup().create();const now=new Date();
+ const monday=new Date(now.getFullYear(),now.getMonth(),now.getDate());monday.setDate(monday.getDate()-((monday.getDay()+6)%7));
+ const before=new Date(monday);before.setMilliseconds(-1);
+ const sunday=new Date(monday);sunday.setDate(sunday.getDate()+7);sunday.setMilliseconds(-1);
+ const next=new Date(monday);next.setDate(next.getDate()+7);
+ app.history=[before,monday,sunday,next].map((d,i)=>({id:i,date:d.toISOString(),type:'A',entries:[]}));
+ assert.equal(app.weeklyCount,2);
+ app.history.push({id:5,date:now.toISOString(),type:'B',entries:[]});assert.equal(app.weeklyCount,3);
+ app.history=app.history.filter(w=>w.id!==5);assert.equal(app.weeklyCount,2);
+});
