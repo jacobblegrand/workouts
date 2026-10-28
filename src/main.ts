@@ -20,7 +20,7 @@ const B:Exercise[] = [{name:'DB Overhead Press',sets:3,reps:'12'},{name:'DB Shru
 @for(ex of exercises;track ex.name;let i=$index){
 <section class="exercise"><div class="exercise-heading"><h3>{{ex.name}}</h3><span>{{ex.sets}} × {{ex.reps}}</span></div>
 <div class="fields"><label class="weight">{{ex.body==='BW'?'Weight':'Weight ('+unit+')'}}
-@if(ex.body==='BW'){<div class="bodyweight">Bodyweight</div>}@else{<div class="weight-field">@if(ex.body){<span>BW +</span>}<input type="number" min="0" step="5" inputmode="decimal" [attr.aria-label]="ex.name+' weight'" placeholder="—" [(ngModel)]="entries[i].weight" (ngModelChange)="saveDraft()"></div>}
+@if(ex.body==='BW'){<div class="bodyweight">Bodyweight</div>}@else{<div class="weight-field">@if(ex.body){<span>BW +</span>}<input type="number" min="0" step="5" inputmode="decimal" [attr.aria-label]="ex.name+' weight'" placeholder="—" [(ngModel)]="entries[i].weight" (ngModelChange)="saveDraft()"><button class="add-weight" [attr.aria-label]="'Increase '+ex.name+' weight by 5'" (click)="increaseWeight(i)">+5</button></div>}
 </label><div class="reps">@for(rep of entries[i].reps;track $index;let s=$index){<label>Set {{s+1}}<input type="number" min="0" step="1" inputmode="numeric" [attr.aria-label]="ex.name+' set '+(s+1)+' reps'" placeholder="Reps" [(ngModel)]="entries[i].reps[s]" (ngModelChange)="saveDraft()"></label>}</div></div>@if(!ex.noRpe){<label class="rpe">Last set RPE<select [attr.aria-label]="ex.name+' last set RPE'" [(ngModel)]="entries[i].rpe" (ngModelChange)="saveDraft()"><option value="">—</option>@for(r of ['1','2','3','4','5','6','6.5','7','7.5','8','8.5','9','9.5','10'];track r){<option [value]="r">{{r}}</option>}</select></label>}</section>}
 <button class="save" (click)="finish()" [disabled]="!hasReps">Save workout</button>
 }@else{
@@ -44,6 +44,7 @@ async download(){try{await this.database.download();}catch{this.message='Could n
 async switchType(type:string){if(this.busy||type===this.type)return;this.drafts[this.type]=structuredClone(this.entries);this.type=type;this.entries=this.drafts[type]||this.freshEntries(type);await this.saveDraft();}
 async deleteWorkout(id:number){if(this.busy)return;const history=this.history.filter(w=>w.id!==id);this.busy=true;try{await this.database.save({...this.snapshot(),history:history as unknown as SavedState['history']});this.history=history;this.deleteId=null;this.message='Workout deleted.';}catch{this.message='Could not delete the workout. It is still saved.';}finally{this.busy=false;this.changes.markForCheck();}}
 get weeklyCount(){const now=new Date();const start=new Date(now.getFullYear(),now.getMonth(),now.getDate());start.setDate(start.getDate()-((start.getDay()+6)%7));const end=new Date(start);end.setDate(end.getDate()+7);return this.history.filter(w=>{const date=new Date(w.date);return date>=start&&date<end;}).length;}
+increaseWeight(i:number){this.entries[i].weight=String(Math.round((Math.max(0,Number(this.entries[i].weight)||0)+5)*100)/100);void this.saveDraft();}
 get exercises(){return this.getExercises(this.type)}
 get hasReps(){return this.entries.some(e=>e.reps.some(r=>r!==''&&r!==null&&r!==undefined));}
 getExercises(t:string){return t==='A'?A:B}

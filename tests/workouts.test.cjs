@@ -44,3 +44,9 @@ test('weekly goal counts Monday through Sunday and excludes other weeks',async()
  app.history.push({id:5,date:now.toISOString(),type:'B',entries:[]});assert.equal(app.weeklyCount,3);
  app.history=app.history.filter(w=>w.id!==5);assert.equal(app.weeklyCount,2);
 });
+
+test('weight button adds five to an empty or existing weight and saves the draft',async()=>{
+ const env=setup();const app=await env.create();app.increaseWeight(0);await new Promise(setImmediate);
+ assert.equal(app.entries[0].weight,'5');app.entries[0].weight='25';app.increaseWeight(0);await new Promise(setImmediate);
+ assert.equal(app.entries[0].weight,'30');const reopened=await env.create();assert.equal(reopened.entries[0].weight,'30');
+});
